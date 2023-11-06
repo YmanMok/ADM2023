@@ -9,23 +9,25 @@ author: Yman Mokrani
 library(phyloseq)
 library(ggplot2)
 library(dplyr)
+devtools::load_all(path="course-material-main/R")
+```
 
-
+```{r}
 output_beta <- here::here("outputs", "beta_diversity")
 if (!dir.exists(output_beta)) dir.create(output_beta, recursive = TRUE)
 ```
 
-1.2 Charger les données dans R
-```{bash}
-cp -R course-material-main/data/asv_table/ ./data/
+```{bash, eval=FALSE}
+cp -R course-material-main/data/asv_table ./data/
 ```
-
 
 ```{r}
 physeq <- readRDS(here::here("data",
                              "asv_table",
                              "phyloseq_object_alpha_beta_div.rds"))
 ```
+
+
 2.1 Normalisation
 2.1.1 Raréfaction
 #raréfaction -> prendre en compte qu'on a un nombre différents de séquences pour chaque échantillon
@@ -44,10 +46,10 @@ tmp <- data.frame(nreads = sort(sample_sums(physeq), decreasing = TRUE),
                   sorted = 1:nsamples(physeq),
                   type = "Samples")
 
+
 readsumsdf <- rbind(readsumsdf, tmp)
 
 head(readsumsdf)
-
 ```
 
 ```{r}
@@ -69,7 +71,7 @@ min(rowSums(physeq@otu_table@.Data))
 
 ```{r}
 physeq_rar <- rarefy_even_depth(physeq, sample.size = 800)
-rowSums(physeq_rar@otu_table@.Data) #how many reads per sample
+rowSums(physeq_rar@otu_table@.Data)  #how many reads per sample
 ```
 
 ```{r}
@@ -104,6 +106,7 @@ data.frame(physeq_clr@otu_table@.Data[1:5, 1:10])
 physeq_phylum <- physeq_rar %>%
   tax_glom(taxrank = "Family") %>%                     # agglomerate at the Family level
   transform_sample_counts(function(x) {x/sum(x)} ) %>% # Transform to rel. abundance
+
   psmelt() %>%                                         # Melt to long format
   filter(Abundance > 0.02) %>%                         # Filter out low abundance taxa
   arrange(Family)                                      # Sort data frame alphabetically by phylum
@@ -255,11 +258,13 @@ for(i in dist_methods){
   # Save the graphic to list
   plist[[i]] = p 
 }
+```
 
-
+```{r}
 df <- plyr::ldply(plist, function(x) x$data)
 head(df)
 ```
+
 ```{r}
 names(df)[1] <- "distance"
 
@@ -274,13 +279,14 @@ ggplot(df, aes(Axis.1, Axis.2, color = Geo)) +
 #sur l'autre elles sont plutot proches => diminution de la distance écologique entre les communautés microbiennes
 #les ordinations nous montre une différence entre les communuatés N-S lié au "logiciel" utilisé
 
-
-
 5.1 Classification ascendante hiérarchique
+
 ```{r}
 #distance matrix calculation
 physeq_clr_dist <- phyloseq::distance(physeq_clr, method = "euclidean")
+```
 
+```{r}
 #Simple aggregation criterion
 spe_single <- hclust(physeq_clr_dist, method = "single")
 
